@@ -11,10 +11,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
+import { TaskComponent } from './task/task.component';
 
 @NgModule({
   declarations: [
     AppComponent,
+    TaskComponent,
   ],
   imports: [
     BrowserModule,
