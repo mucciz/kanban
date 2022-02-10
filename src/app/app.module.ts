@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { TaskDialogComponent } from './task-dialog/task-dialog.component';
 
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -17,6 +18,7 @@ import { TaskComponent } from './task/task.component';
   declarations: [
     AppComponent,
     TaskComponent,
+    TaskDialogComponent
   ],
   imports: [
     BrowserModule,
