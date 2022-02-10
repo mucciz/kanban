@@ -1,0 +1,14 @@
+{
+  "targets": {
+    "kanbanproject-f8905": {
+      "hosting": {
+        "kanban-fire": [
+          "kanbanproject-f8905"
+        ]
+      }
+    }
+  },
+  "projects": {
+    "default": "kanbanproject-f8905"
+  }
+}
