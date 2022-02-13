@@ -1,32 +1,47 @@
+// import { addDoc } from 'firebase/firestore';
+// import { collectionData } from 'rxfire/firestore';
 import { transferArrayItem, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { TaskDialogComponent, TaskDialogResult } from './task-dialog/task-dialog.component';
+import {
+  TaskDialogComponent,
+  TaskDialogResult,
+} from './task-dialog/task-dialog.component';
 import { Task } from './task/task';
+import {
+  Firestore,
+  collection,
+  collectionData,
+  addDoc,
+  runTransaction,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
   title = 'kanban-fire';
-  todo: Task[] = [
-    {
-      title: 'Buy Milk',
-      description: 'Go to the store and buy milk'
 
-    },
-    {
-      title: 'Create Kanban app',
-      description: 'Using firebase and Angular create a Kanban app!'
+  constructor(private dialog: MatDialog, private firestore: Firestore) {}
 
-    },
-  ]
-  inProgress: Task[] = [];
-  done: Task[] = [];
-
-  constructor(private dialog: MatDialog) {}
+  todoCollection = collection(this.firestore, 'todo');
+  todo = collectionData(this.todoCollection, { idField: 'id' }) as Observable<
+    Task[]
+  >;
+  inProgressCollection = collection(this.firestore, 'inProgress');
+  inProgress = collectionData(this.inProgressCollection, {
+    idField: 'id',
+  }) as Observable<Task[]>;
+  doneCollection = collection(this.firestore, 'done');
+  done = collectionData(this.doneCollection, { idField: 'id' }) as Observable<
+    Task[]
+  >;
 
   newTask(): void {
     const dialogRef = this.dialog.open(TaskDialogComponent, {
@@ -41,8 +56,8 @@ export class AppComponent {
         if (!result) {
           return;
         }
-        this.todo.push(result.task);
-      })
+        addDoc(this.todoCollection, result.task);
+      });
   }
 
   editTask(list: 'done' | 'todo' | 'inProgress', task: Task): void {
@@ -53,26 +68,48 @@ export class AppComponent {
         enableDelete: true,
       },
     });
-    dialogRef.afterClosed().subscribe((result: TaskDialogResult|undefined) => {
-      if (!result) {
-        return;
-      }
-      const dataList = this[list];
-      const taskIndex = dataList.indexOf(task);
-      if (result.delete) {
-        dataList.splice(taskIndex, 1);
-      } else {
-        dataList[taskIndex] = task;
-      }
-    });
+    dialogRef
+      .afterClosed()
+      .subscribe((result: TaskDialogResult | undefined) => {
+        if (!result) {
+          return;
+        }
+        const delDocRef = doc(
+          this.firestore,
+          `${collection(this.firestore, list).path}/${task.id}`
+        );
+        const upDocRef = doc(
+          this.firestore,
+          `${collection(this.firestore, list).path}/${task.id}`
+        );
+        if (result.delete) {
+          deleteDoc(delDocRef);
+        } else {
+          updateDoc(upDocRef, { task });
+        }
+      });
   }
-  drop(event: CdkDragDrop<Task[] | any>): void {
-    if (event.previousContainer === event.container) {
-      return;
-    }
+  drop(event: CdkDragDrop<Task[] | null>): void {
     if (!event.container.data || !event.previousContainer.data) {
       return;
     }
+    if (event.previousContainer === event.container) {
+      return;
+    }
+    const item = event.previousContainer.data[event.previousIndex];
+    const docRef = doc(
+      this.firestore,
+      `${event.previousContainer.id}/${item.id}`
+    );
+    const collectionRef = collection(this.firestore, event.container.id);
+    runTransaction(this.firestore, () => {
+      const promise = Promise.all([
+        deleteDoc(docRef),
+        addDoc(collectionRef, item),
+      ]);
+      return promise;
+    });
+
     transferArrayItem(
       event.previousContainer.data,
       event.container.data,
