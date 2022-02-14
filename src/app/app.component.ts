@@ -18,7 +18,7 @@ import {
   doc,
   updateDoc,
 } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
+import { Observable} from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -74,19 +74,15 @@ export class AppComponent {
         if (!result) {
           return;
         }
-        const delDocRef = doc(
-          this.firestore,
-          `${collection(this.firestore, list).path}/${task.id}`
-        );
-        const upDocRef = doc(
+        const docRef = doc(
           this.firestore,
           `${collection(this.firestore, list).path}/${task.id}`
         );
         if (result.delete) {
-          deleteDoc(delDocRef);
+          deleteDoc(docRef);
         } else {
-          updateDoc(upDocRef, { task });
-        }
+          updateDoc(docRef, { task: task });
+        } 
       });
   }
   drop(event: CdkDragDrop<Task[] | null>): void {
@@ -97,6 +93,7 @@ export class AppComponent {
       return;
     }
     const item = event.previousContainer.data[event.previousIndex];
+    console.log(typeof this.todoCollection, item);
     const docRef = doc(
       this.firestore,
       `${event.previousContainer.id}/${item.id}`
